@@ -2,8 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
-const data = require('./data.json');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://rifatsaown0:1EEBuxdvFmw0m4PN@cluster0.meus3dj.mongodb.net/?retryWrites=true&w=majority";
 
 //rifatsaown0
@@ -36,19 +35,49 @@ async function run() {
       const users = await cursor.toArray();
       res.send(users);
     });
+    app.get('/user/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    })
 
     app.post('/users', async (req, res) => {
       const user = req.body;
       console.log('hitting the post', user);
       const result = await userCollection.insertOne(user);
-      res.json(result);
+      res.send(result);
+    })
+
+    app.put('/user/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedUser = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name: updatedUser.name,
+          email: updatedUser.email,
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+      console.log('hitting the put', result);
+    })
+
+
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
     })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   }
-  finally {} 
+  finally { }
 }
 run().catch(console.dir);
 
